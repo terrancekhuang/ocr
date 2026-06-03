@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OCR → Markdown</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>
+      <span class="title-ocr">OCR</span>
+      <span class="title-arrow">→</span>
+      <span class="title-md">md</span>
+    </h1>
+  </header>
+
+  <main>
+    <section class="panel input-panel">
+      <div class="tab-bar" role="tablist">
+        <button class="tab active" data-tab="upload" role="tab" aria-selected="true">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/></svg>
+          Upload
+        </button>
+        <button class="tab" data-tab="camera" role="tab" aria-selected="false">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M15 3h-3.5l-1-2h-5l-1 2H1a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zM8 12a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-6.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg>
+          Camera
+        </button>
+        <div class="tab-ink" id="tab-ink"></div>
+      </div>
+
+      <!-- Upload view (default) -->
+      <div id="upload-view" class="tab-view">
+        <div id="drop-zone" class="drop-zone">
+          <div class="drop-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <p class="drop-primary">Drop image here</p>
+          <p class="drop-secondary">or <label for="file-input" class="browse-link">browse</label></p>
+          <p class="drop-formats">PNG · JPG · WebP · GIF</p>
+          <p class="paste-hint-inline"><kbd>⌘V</kbd> to paste</p>
+          <input type="file" id="file-input" accept="image/*" hidden>
+        </div>
+        <div class="media-frame" id="upload-frame" hidden>
+          <img id="upload-preview" class="image-preview" alt="Uploaded">
+          <button class="frame-clear-btn" id="clear-upload-btn" title="Remove">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div class="img-actions" id="upload-actions" hidden>
+          <button id="upload-crop-btn" class="btn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 2 6 22"/><polyline points="18 2 18 22"/><polyline points="2 6 22 6"/><polyline points="2 18 22 18"/></svg>
+            Crop
+          </button>
+        </div>
+      </div>
+
+      <!-- Camera view -->
+      <div id="camera-view" class="tab-view" style="display:none">
+        <div class="media-frame dark-frame" id="camera-frame">
+          <video id="preview" autoplay playsinline></video>
+          <canvas id="snapshot" hidden></canvas>
+          <div id="camera-placeholder" class="placeholder">
+            <svg width="36" height="36" viewBox="0 0 16 16" fill="currentColor"><path d="M15 3h-3.5l-1-2h-5l-1 2H1a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1zM8 12a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm0-6.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg>
+            <p>Camera not started</p>
+          </div>
+          <img id="captured-preview" class="image-preview" hidden alt="Captured">
+        </div>
+        <div class="cam-actions">
+          <button id="start-camera-btn" class="btn">Start Camera</button>
+          <button id="stop-camera-btn" class="btn" hidden>Stop</button>
+          <button id="capture-btn" class="btn btn-accent" disabled>Capture</button>
+          <button id="recapture-btn" class="btn" hidden>Retake</button>
+          <button id="camera-crop-btn" class="btn" hidden>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 2 6 22"/><polyline points="18 2 18 22"/><polyline points="2 6 22 6"/><polyline points="2 18 22 18"/></svg>
+            Crop
+          </button>
+        </div>
+      </div>
+
+      <!-- Crop view (shown in-place when cropping) -->
+      <div id="crop-view" class="tab-view" style="display:none">
+        <div class="crop-container">
+          <div class="crop-wrap">
+            <img id="crop-img" alt="" draggable="false">
+            <canvas id="crop-canvas"></canvas>
+          </div>
+        </div>
+        <div class="img-actions">
+          <button id="crop-cancel-btn" class="btn">Cancel</button>
+          <button id="crop-apply-btn" class="btn btn-accent">Apply Crop</button>
+        </div>
+      </div>
+
+      <button id="submit-btn" class="btn-convert" disabled>
+        <span class="convert-label">Convert to Markdown</span>
+        <svg class="convert-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </section>
+
+    <section class="panel output-panel">
+      <div class="output-header">
+        <div id="status-wrap">
+          <span id="status" class="status"></span>
+        </div>
+        <div class="output-actions">
+          <button id="copy-btn" class="btn" disabled>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy
+          </button>
+          <button id="download-btn" class="btn" disabled>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            .md
+          </button>
+        </div>
+      </div>
+      <div class="output-body">
+        <textarea
+          id="output-editor"
+          class="output-editor"
+          spellcheck="false"
+          placeholder="Markdown output will appear here. You can edit before downloading."
+        ></textarea>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
