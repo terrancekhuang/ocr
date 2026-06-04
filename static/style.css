@@ -175,6 +175,7 @@ main {
 
 /* ── Tab views ───────────────────────────────────────────────── */
 .tab-view {
+  display: flex;
   flex-direction: column;
   flex: 1;
   padding: 1rem;
@@ -269,7 +270,7 @@ main {
   border-radius: var(--radius);
   overflow: auto;
   display: block;
-  min-height: 200px;
+  min-height: 0;
   position: relative;
   background: var(--code-bg);
 }
