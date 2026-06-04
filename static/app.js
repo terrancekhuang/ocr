@@ -391,7 +391,8 @@ function onCropDown(e) {
   } else if (inSelection(p.x, p.y)) {
     cropDrag = { type:'move', startX:p.x, startY:p.y, orig:{ ...cropRect } };
   } else {
-    cropDrag = { type:'new', startX:p.x, startY:p.y };
+    cropDrag = { type:'new', startX:p.x, startY:p.y,
+                 touchOriginY: e.touches ? e.touches[0].clientY : null };
     cropRect = { x:p.x, y:p.y, w:0, h:0 };
   }
 }
@@ -403,6 +404,26 @@ function onCropMove(e) {
   if (!cropDrag) {
     const h = hitHandle(p.x, p.y);
     cropCanvas.style.cursor = h ? CURSORS[h] : inSelection(p.x, p.y) ? 'move' : 'crosshair';
+    return;
+  }
+
+  // Resolve scroll-vs-draw intent on the first significant touch movement
+  if (cropDrag.type === 'new' && cropDrag.touchOriginY !== null && e.touches) {
+    const clientDY = Math.abs(e.touches[0].clientY - cropDrag.touchOriginY);
+    const canvasDX = Math.abs(p.x - cropDrag.startX);
+    if (clientDY > 8 || canvasDX > 8) {
+      if (clientDY > canvasDX) {
+        cropDrag = { type: 'scroll', lastY: e.touches[0].clientY };
+      } else {
+        cropDrag = { ...cropDrag, touchOriginY: null };
+      }
+    }
+  }
+
+  if (cropDrag.type === 'scroll' && e.touches) {
+    const y = e.touches[0].clientY;
+    cropCanvas.closest('.crop-container').scrollTop += cropDrag.lastY - y;
+    cropDrag = { type: 'scroll', lastY: y };
     return;
   }
 
